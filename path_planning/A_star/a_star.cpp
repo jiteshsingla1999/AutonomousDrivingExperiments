@@ -3,7 +3,7 @@
 using namespace std::tr1;
 using namespace std;
 int motion[8][3];
-    double minx,miny,maxx,maxy,xw,yw,xwidth,ywidth;
+    double minx,miny,maxx,maxy,xwidth,ywidth;
 class coordinates
 {
 public:
@@ -71,12 +71,11 @@ coordinates a_star_planning(double sx, double sy, double gx, double gy, int * ob
     int ** obmap = calc_obstacle_map(obsx, obsy, obsn, reso, rr);
     get_motion_model();
 
-    typedef unordered_map <int, node> pppp;
+    typedef tr1::unordered_map <int, node> pppp;
     pppp openset;
     pppp closedset;
     ///unordered_map <int, node> closedset;
-    openset[calc_index(nstart, xw, minx, miny)] = nstart;
-
+    openset[calc_index(nstart, xwidth, minx, miny)] = nstart;
 
     while(1)
     {
@@ -97,12 +96,11 @@ coordinates a_star_planning(double sx, double sy, double gx, double gy, int * ob
 
       if ( current.x == ngoal.x && current.y == ngoal.y)
       {
-              cout << "Find goal\n";
+              cout << "Goal found\n";
               ngoal.p_index = current.p_index;
               ngoal.cost = current.cost;
               break;
       }
-
 
       openset.erase(cid);
       closedset[cid] = current;
@@ -112,7 +110,7 @@ coordinates a_star_planning(double sx, double sy, double gx, double gy, int * ob
         node dummy = node(current.x + motion[j][0],
                           current.y + motion[j][1],
                           current.cost + motion[j][2], cid);
-        int n_id = calc_index(dummy, xw, minx, miny);
+        int n_id = calc_index(dummy, xwidth, minx, miny);
 
         if(closedset.find(n_id)!=closedset.end())
               continue;
@@ -131,10 +129,9 @@ coordinates a_star_planning(double sx, double sy, double gx, double gy, int * ob
         }
 
       }
-
     }
 
-
+    return coordinates(gx, gy);
 }
 
 bool verify_node( node node1, int **obmap, int minx, int miny, int maxx, int maxy)
@@ -146,7 +143,7 @@ bool verify_node( node node1, int **obmap, int minx, int miny, int maxx, int max
   else if(node1.x>=maxx || node1.y>=maxy)
     return 0;
 
-  if(obmap[int(node1.x)][int(node1.y)])
+  if(obmap[int(node1.x-minx)][int(node1.y-miny)])
     return 0;
 
 
@@ -167,21 +164,21 @@ int find_min(int * obs, int n)
 }
 int find_max(int * obs, int n)
 {
-  int min = obs[0];
+  int max = obs[0];
   for(int i=1;i<n;i++)
   {
-    if(min<obs[i])
-    min=obs[i];
+    if(max<obs[i])
+    max=obs[i];
   }
-  return min;
+  return max;
 }
 int ** calc_obstacle_map(int *obsx, int *obsy, int obsn, int reso, int rr)
 {
-  minx = find_min(obsx, obsn);
-  miny = find_min(obsy, obsn);
+  minx = 1;
+  miny = 1;
 
-  maxx = find_max(obsx, obsn);
-  maxy = find_max(obsy, obsn);
+  maxx = 101;
+  maxy = 101;
 
   xwidth = maxx-minx;
   ywidth = maxy-miny;
@@ -211,24 +208,31 @@ void get_motion_model()
     motion[0][0]=1;
     motion[0][1]=0;
     motion[0][2]=1;
+
     motion[1][0]=0;
     motion[1][1]=1;
     motion[1][2]=1;
+
     motion[2][0]=-1;
     motion[2][1]=0;
     motion[2][2]=1;
+
     motion[3][0]=0;
     motion[3][1]=-1;
     motion[3][2]=1;
+
     motion[4][0]=-1;
     motion[4][1]=-1;
     motion[4][2]=sqrt(2);
+
     motion[5][0]=-1;
     motion[5][1]=1;
     motion[5][2]=sqrt(2);
+
     motion[6][0]=1;
     motion[6][1]=-1;
     motion[6][2]=sqrt(2);
+
     motion[7][0]=1;
     motion[7][1]=1;
     motion[7][2]=sqrt(2);
@@ -243,7 +247,10 @@ double calc_heuristic(node n1, node n2)
     double d = w * sqrt((n1.x - n2.x)*(n1.x - n2.x) + (n1.y - n2.y)*(n1.y - n2.y));
     return d;
 }
+
 int main()
 {
-  cout << "Test1";
+    int obsxarr[10] = {1, 2, 2, 2, 2, 4, 4, 4, 4, 4}, obsyarr[10] = {6, 2, 3, 4, 6, 2, 4, 5, 6, 7};
+    int * obsx = obsxarr, * obsy = obsyarr;
+    coordinates z = a_star_planning(1, 1, 1, 8, obsx, obsy, 10, 1, 5);
 }
